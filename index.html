@@ -6,19 +6,34 @@
   <title>LUCK STORE</title>
   <style>
     body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}
-    h1{margin:0 0 16px;font-size:24px;text-align:center}
+    h1{margin:0 0 20px;font-size:28px;text-align:center}
+    h2{margin:20px 0 12px;font-size:22px;color:#9fbff8;border-bottom:2px solid #222;padding-bottom:4px}
     .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
     .product{background:#11161c;padding:12px;border-radius:12px}
     .product iframe{width:100%;height:180px;border-radius:8px;background:#000}
+    .product img{width:100%;height:180px;border-radius:8px;object-fit:cover;background:#000}
     .product h3{margin:8px 0;font-size:16px}
     .desc{font-size:13px;color:#bcd6ff;min-height:32px}
-    .price{font-weight:700;color:#a7ffb8;margin:6px 0}
-    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:2px solid #00f0ff;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+    .price{font-weight:700;color:#a7ffb8;margin:4px 0}
+    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:2px solid #00f0ff;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:600;margin-top:6px;text-decoration:none}
+    ul{list-style:none;padding:0;margin:6px 0}
+    ul li{font-size:13px;color:#a7ffb8}
   </style>
 </head>
 <body>
   <h1>LUCK STORE</h1>
-  <div id="products" class="products"></div>
+
+  <!-- Sección cuentas -->
+  <h2>Cuentas</h2>
+  <div id="accounts" class="products"></div>
+
+  <!-- Sección hacks -->
+  <h2>Hacks</h2>
+  <div id="hacks" class="products"></div>
+
+  <!-- Sección servicios -->
+  <h2>Servicios</h2>
+  <div id="services" class="products"></div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -36,8 +51,6 @@
     firebase.initializeApp(firebaseConfig);
     const db=firebase.database();
 
-    const productsDiv=document.getElementById("products");
-
     function getYoutubeEmbed(link) {
       try {
         const url = new URL(link);
@@ -50,34 +63,97 @@
         if (url.pathname.startsWith("/shorts/")) {
           return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];
         }
-      } catch (e) {
-        return "";
-      }
+      } catch (e) { return ""; }
       return "";
     }
 
     function loadProducts(){
-      db.ref("products").on("value",snap=>{
-        productsDiv.innerHTML="";
+      // ---- Cuentas ----
+      const accDiv=document.getElementById("accounts");
+      db.ref("products/accounts").once("value",snap=>{
+        accDiv.innerHTML="";
         const data=snap.val();
-        if(!data){productsDiv.innerHTML="<p>No hay productos disponibles</p>";return;}
-        Object.values(data).forEach(p=>{
-          const d=document.createElement("div");d.className="product";
-          const iframe=document.createElement("iframe");
-          iframe.src=getYoutubeEmbed(p.youtubeLink);
-          iframe.allowFullscreen=true;
-          d.appendChild(iframe);
-          const h=document.createElement("h3");h.textContent=p.title;
-          const desc=document.createElement("div");desc.className="desc";desc.textContent=p.desc;
-          const price=document.createElement("div");price.className="price";price.textContent="$"+p.price;
-          const btn=document.createElement("a");
-          btn.className="btn";
-          btn.href=`https://wa.me/573142369516?text=Hola, quiero más información sobre la cuenta: ${encodeURIComponent(p.title)} (${p.price} USD) - Link: ${encodeURIComponent(p.accountLink)}`;
-          btn.target="_blank";
-          btn.textContent="Más información";
-          d.append(h,desc,price,btn);
-          productsDiv.appendChild(d);
-        });
+        if(data){
+          Object.values(data).forEach(p=>{
+            const d=document.createElement("div");d.className="product";
+            const iframe=document.createElement("iframe");
+            iframe.src=getYoutubeEmbed(p.youtubeLink);
+            d.appendChild(iframe);
+            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div><div class="price">$${p.price}</div>`;
+            const btn=document.createElement("a");
+            btn.className="btn";
+            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre la cuenta: ${encodeURIComponent(p.title)} - ${p.price} USD - Link: ${encodeURIComponent(p.accountLink)}`;
+            btn.target="_blank";btn.textContent="Más información";
+            d.appendChild(btn);
+            accDiv.appendChild(d);
+          });
+        }else{
+          accDiv.innerHTML="<p>No hay cuentas disponibles</p>";
+        }
+      });
+
+      // ---- Hacks ----
+      const hacksDiv=document.getElementById("hacks");
+      db.ref("products/hacks").once("value",snap=>{
+        hacksDiv.innerHTML="";
+        const data=snap.val();
+        if(data){
+          Object.values(data).forEach(p=>{
+            const d=document.createElement("div");d.className="product";
+            const iframe=document.createElement("iframe");
+            iframe.src=getYoutubeEmbed(p.youtubeLink);
+            d.appendChild(iframe);
+            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div>`;
+            if(p.priceList){
+              const ul=document.createElement("ul");
+              p.priceList.forEach(pr=>{
+                const li=document.createElement("li");
+                li.textContent=`${pr.days} día(s) → $${pr.price}`;
+                ul.appendChild(li);
+              });
+              d.appendChild(ul);
+            }
+            const btn=document.createElement("a");
+            btn.className="btn";
+            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre el hack: ${encodeURIComponent(p.title)}`;
+            btn.target="_blank";btn.textContent="Más información";
+            d.appendChild(btn);
+            hacksDiv.appendChild(d);
+          });
+        }else{
+          hacksDiv.innerHTML="<p>No hay hacks disponibles</p>";
+        }
+      });
+
+      // ---- Servicios ----
+      const servDiv=document.getElementById("services");
+      db.ref("products/services").once("value",snap=>{
+        servDiv.innerHTML="";
+        const data=snap.val();
+        if(data){
+          Object.values(data).forEach(p=>{
+            const d=document.createElement("div");d.className="product";
+            const img=document.createElement("img");img.src=p.imgLink;d.appendChild(img);
+            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div>`;
+            if(p.priceList){
+              const ul=document.createElement("ul");
+              p.priceList.forEach(pr=>{
+                const li=document.createElement("li");
+                li.textContent=`${pr.days} día(s) → $${pr.price}`;
+                ul.appendChild(li);
+              });
+              d.appendChild(ul);
+            }
+            const btn=document.createElement("a");
+            btn.className="btn";
+            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre el servicio: ${encodeURIComponent(p.title)}`;
+            btn.target="_blank";btn.textContent="Más información";
+            d.appendChild(btn);
+            servDiv.appendChild(d);
+          });
+        }else{
+          servDiv.innerHTML="<p>No hay servicios disponibles</p>";
+        }
       });
     }
     loadProducts();
