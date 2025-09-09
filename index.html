@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LUCK STORE</title>
+  <style>
+    body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}
+    h1{margin:0 0 16px;font-size:24px;text-align:center}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .product{background:#11161c;padding:12px;border-radius:12px}
+    .product iframe{width:100%;height:180px;border-radius:8px;background:#000}
+    .product h3{margin:8px 0;font-size:16px}
+    .desc{font-size:13px;color:#bcd6ff;min-height:32px}
+    .price{font-weight:700;color:#a7ffb8;margin:6px 0}
+    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:2px solid #00f0ff;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+  </style>
+</head>
+<body>
+  <h1>LUCK STORE</h1>
+  <div id="products" class="products"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCj0DVSi2LKWVEIb0vVBNmBk5kwNKwwJrg",
+      authDomain: "storeacounts-d0ca8.firebaseapp.com",
+      projectId: "storeacounts-d0ca8",
+      databaseURL: "https://storeacounts-d0ca8-default-rtdb.firebaseio.com",
+      storageBucket: "storeacounts-d0ca8.appspot.com",
+      messagingSenderId: "822442149761",
+      appId: "1:822442149761:web:bb1d97c5c5f170ddb10a80"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db=firebase.database();
+
+    const productsDiv=document.getElementById("products");
+
+    function loadProducts(){
+      db.ref("products").on("value",snap=>{
+        productsDiv.innerHTML="";
+        const data=snap.val();
+        if(!data){productsDiv.innerHTML="<p>No hay productos disponibles</p>";return;}
+        Object.values(data).forEach(p=>{
+          const d=document.createElement("div");d.className="product";
+          const iframe=document.createElement("iframe");
+          iframe.src=p.youtubeLink.replace("watch?v=","embed/");
+          iframe.allowFullscreen=true;
+          d.appendChild(iframe);
+          const h=document.createElement("h3");h.textContent=p.title;
+          const desc=document.createElement("div");desc.className="desc";desc.textContent=p.desc;
+          const price=document.createElement("div");price.className="price";price.textContent="$"+p.price;
+          const btn=document.createElement("a");
+          btn.className="btn";
+          btn.href=`https://wa.me/573000000000?text=Hola, quiero más información sobre la cuenta: ${encodeURIComponent(p.title)} (${p.price} USD) - Link: ${encodeURIComponent(p.accountLink)}`;
+          btn.target="_blank";
+          btn.textContent="Más información";
+          d.append(h,desc,price,btn);
+          productsDiv.appendChild(d);
+        });
+      });
+    }
+    loadProducts();
+  </script>
+</body>
+</html>
