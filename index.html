@@ -38,6 +38,24 @@
 
     const productsDiv=document.getElementById("products");
 
+    function getYoutubeEmbed(link) {
+      try {
+        const url = new URL(link);
+        if (url.hostname.includes("youtu.be")) {
+          return "https://www.youtube.com/embed/" + url.pathname.slice(1);
+        }
+        if (url.searchParams.get("v")) {
+          return "https://www.youtube.com/embed/" + url.searchParams.get("v");
+        }
+        if (url.pathname.startsWith("/shorts/")) {
+          return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];
+        }
+      } catch (e) {
+        return "";
+      }
+      return "";
+    }
+
     function loadProducts(){
       db.ref("products").on("value",snap=>{
         productsDiv.innerHTML="";
@@ -46,7 +64,7 @@
         Object.values(data).forEach(p=>{
           const d=document.createElement("div");d.className="product";
           const iframe=document.createElement("iframe");
-          iframe.src=p.youtubeLink.replace("watch?v=","embed/");
+          iframe.src=getYoutubeEmbed(p.youtubeLink);
           iframe.allowFullscreen=true;
           d.appendChild(iframe);
           const h=document.createElement("h3");h.textContent=p.title;
@@ -54,7 +72,7 @@
           const price=document.createElement("div");price.className="price";price.textContent="$"+p.price;
           const btn=document.createElement("a");
           btn.className="btn";
-          btn.href=`https://wa.me/573000000000?text=Hola, quiero más información sobre la cuenta: ${encodeURIComponent(p.title)} (${p.price} USD) - Link: ${encodeURIComponent(p.accountLink)}`;
+          btn.href=`https://wa.me/573142369516?text=Hola, quiero más información sobre la cuenta: ${encodeURIComponent(p.title)} (${p.price} USD) - Link: ${encodeURIComponent(p.accountLink)}`;
           btn.target="_blank";
           btn.textContent="Más información";
           d.append(h,desc,price,btn);
