@@ -1,232 +1,179 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🔥LUCK STORE🔥</title>
-  <style>
-    body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}
-    h1{margin:0 0 20px;font-size:28px;text-align:center}
-    h2{margin:20px 0 12px;font-size:22px;color:#9fbff8;border-bottom:2px solid #222;padding-bottom:4px}
-    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-    .product{background:#11161c;padding:12px;border-radius:12px}
-    .product iframe{width:100%;height:180px;border-radius:8px;background:#000}
-    .product img{width:100%;height:180px;border-radius:8px;object-fit:cover;background:#000}
-    .product h3{margin:8px 0;font-size:16px}
-    .desc{font-size:13px;color:#bcd6ff;min-height:32px}
-    .price{font-weight:700;color:#a7ffb8;margin:4px 0}
-    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:2px solid #00f0ff;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:600;margin-top:6px;text-decoration:none}
-    ul{list-style:none;padding:0;margin:6px 0}
-    ul li{font-size:13px;color:#a7ffb8}
-
-    /* Animaciones modal */
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    @keyframes zoomIn { from { transform:scale(0.8); opacity:0.6; } to { transform:scale(1); opacity:1; } }
-    @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
-    @keyframes zoomOut { from { transform:scale(1); opacity:1; } to { transform:scale(0.8); opacity:0; } }
-  </style>
-</head>
-<body>
-  <h1>🔥LUCK STORE🔥</h1>
-
-  <!-- Sección cuentas -->
-  <h2>Cuentas</h2>
-  <div id="accounts" class="products"></div>
-
-  <!-- Sección hacks -->
-  <h2>Hacks</h2>
-  <div id="hacks" class="products"></div>
-
-  <!-- Sección servicios -->
-  <h2>Servicios</h2>
-  <div id="services" class="products"></div>
-
-  <!-- Modal de seguridad -->
-  <div id="securityModal" style="
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    animation: fadeIn 0.5s ease forwards;
-  ">
-    <div id="securityBox" style="
-      background: #11161c;
-      padding: 20px;
-      border-radius: 14px;
-      max-width: 400px;
-      text-align: center;
-      color: #e6eef6;
-      box-shadow: 0 0 20px rgba(0,255,255,0.3);
-      transform: scale(0.8);
-      animation: zoomIn 0.4s ease forwards;
-    ">
-      <h2 style="color:#00f0ff;">⚠️ Aviso de seguridad</h2>
-      <p style="font-size:14px;line-height:1.5;margin:15px 0;">
-        Todos los tratos en esta web se realizarán <b>únicamente con el desarrollador</b> 
-        para evitar estafas y garantizar que todo sea <b>100% seguro</b>.
-      </p>
-      <button onclick="closeModal()" style="
-        background:#00f0ff;
-        color:#000;
-        border:none;
-        padding:10px 18px;
-        border-radius:10px;
-        font-weight:bold;
-        cursor:pointer;
-        margin-top:10px;
-        transition: transform 0.2s ease, background 0.2s ease;
-      " onmouseover="this.style.transform='scale(1.05)'; this.style.background='#0ff9ff';" 
-         onmouseout="this.style.transform='scale(1)'; this.style.background='#00f0ff';">
-        Entendido ✅
-      </button>
-    </div>
-  </div>
-
-  <!-- Sonido de notificación -->
-  <audio id="modalSound" preload="auto">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCj0DVSi2LKWVEIb0vVBNmBk5kwNKwwJrg",
-      authDomain: "storeacounts-d0ca8.firebaseapp.com",
-      projectId: "storeacounts-d0ca8",
-      databaseURL: "https://storeacounts-d0ca8-default-rtdb.firebaseio.com",
-      storageBucket: "storeacounts-d0ca8.appspot.com",
-      messagingSenderId: "822442149761",
-      appId: "1:822442149761:web:bb1d97c5c5f170ddb10a80"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db=firebase.database();
-
-    function getYoutubeEmbed(link) {
-      try {
-        const url = new URL(link);
-        if (url.hostname.includes("youtu.be")) {
-          return "https://www.youtube.com/embed/" + url.pathname.slice(1);
-        }
-        if (url.searchParams.get("v")) {
-          return "https://www.youtube.com/embed/" + url.searchParams.get("v");
-        }
-        if (url.pathname.startsWith("/shorts/")) {
-          return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];
-        }
-      } catch (e) { return ""; }
-      return "";
-    }
-
-    function loadProducts(){
-      // ---- Cuentas ----
-      const accDiv=document.getElementById("accounts");
-      db.ref("products/accounts").once("value",snap=>{
-        accDiv.innerHTML="";
-        const data=snap.val();
-        if(data){
-          Object.values(data).forEach(p=>{
-            const d=document.createElement("div");d.className="product";
-            const iframe=document.createElement("iframe");
-            iframe.src=getYoutubeEmbed(p.youtubeLink);
-            d.appendChild(iframe);
-            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div><div class="price">$${p.price}</div>`;
-            const btn=document.createElement("a");
-            btn.className="btn";
-            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre la cuenta: ${encodeURIComponent(p.title)} - ${p.price} USD - Link: ${encodeURIComponent(p.accountLink)}`;
-            btn.target="_blank";btn.textContent="Más información";
-            d.appendChild(btn);
-            accDiv.appendChild(d);
-          });
-        }else{
-          accDiv.innerHTML="<p>No hay cuentas disponibles</p>";
-        }
-      });
-
-      // ---- Hacks ----
-      const hacksDiv=document.getElementById("hacks");
-      db.ref("products/hacks").once("value",snap=>{
-        hacksDiv.innerHTML="";
-        const data=snap.val();
-        if(data){
-          Object.values(data).forEach(p=>{
-            const d=document.createElement("div");d.className="product";
-            const iframe=document.createElement("iframe");
-            iframe.src=getYoutubeEmbed(p.youtubeLink);
-            d.appendChild(iframe);
-            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div>`;
-            if(p.priceList){
-              const ul=document.createElement("ul");
-              p.priceList.forEach(pr=>{
-                const li=document.createElement("li");
-                li.textContent=`${pr.days} día(s) → $${pr.price}`;
-                ul.appendChild(li);
-              });
-              d.appendChild(ul);
-            }
-            const btn=document.createElement("a");
-            btn.className="btn";
-            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre el hack: ${encodeURIComponent(p.title)}`;
-            btn.target="_blank";btn.textContent="Más información";
-            d.appendChild(btn);
-            hacksDiv.appendChild(d);
-          });
-        }else{
-          hacksDiv.innerHTML="<p>No hay hacks disponibles</p>";
-        }
-      });
-
-      // ---- Servicios ----
-      const servDiv=document.getElementById("services");
-      db.ref("products/services").once("value",snap=>{
-        servDiv.innerHTML="";
-        const data=snap.val();
-        if(data){
-          Object.values(data).forEach(p=>{
-            const d=document.createElement("div");d.className="product";
-            const img=document.createElement("img");img.src=p.imgLink;d.appendChild(img);
-            d.innerHTML+=`<h3>${p.title}</h3><div class="desc">${p.desc}</div>`;
-            if(p.priceList){
-              const ul=document.createElement("ul");
-              p.priceList.forEach(pr=>{
-                const li=document.createElement("li");
-                li.textContent=`${pr.days} día(s) → $${pr.price}`;
-                ul.appendChild(li);
-              });
-              d.appendChild(ul);
-            }
-            const btn=document.createElement("a");
-            btn.className="btn";
-            btn.href=`https://wa.me/573142369516?text=Hola, quiero información sobre el servicio: ${encodeURIComponent(p.title)}`;
-            btn.target="_blank";btn.textContent="Más información";
-            d.appendChild(btn);
-            servDiv.appendChild(d);
-          });
-        }else{
-          servDiv.innerHTML="<p>No hay servicios disponibles</p>";
-        }
-      });
-    }
-    loadProducts();
-
-    // ---- Modal con sonido y animación de salida ----
-    window.addEventListener("load", () => {
-      const sound = document.getElementById("modalSound");
-      sound.play().catch(()=>{}); // algunos navegadores bloquean autoplay
-    });
-
-    function closeModal(){
-      const modal = document.getElementById("securityModal");
-      const box = document.getElementById("securityBox");
-      modal.style.animation = "fadeOut 0.5s ease forwards";
-      box.style.animation = "zoomOut 0.4s ease forwards";
-      setTimeout(()=>{ modal.style.display="none"; }, 500);
-    }
-  </script>
-</body>
+<!doctype html>    
+<html lang="es">    
+<head>    
+  <meta charset="utf-8" />    
+  <meta name="viewport" content="width=device-width,initial-scale=1" />    
+  <title>LUCK STORE - Página Pública</title>    
+  <style>    
+    body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}    
+    h1{margin:0 0 16px 0;font-size:24px;text-align:center}    
+    .card{background:#11161c;padding:16px;border-radius:12px;    
+          border:1px solid rgba(255,255,255,0.05);margin-bottom:16px}    
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));    
+              gap:14px;margin-top:12px}    
+    .product{background:#0f1113;padding:10px;border-radius:12px;text-align:center}    
+    .product iframe{width:100%;height:160px;border-radius:8px;background:#000}    
+    .product img{width:100%;border-radius:8px}    
+    .product h3{margin:6px 0;font-size:15px}    
+    .desc{font-size:13px;color:#bcd6ff;min-height:32px;margin-bottom:8px}    
+    .price{font-weight:700;color:#a7ffb8;margin:4px 0}    
+    .btn{display:inline-block;padding:8px 12px;margin:6px 4px;    
+         border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600}    
+    .btn-download{background:#00c3ff;color:#fff}    
+    .btn-tutorial{background:#ff006a;color:#fff}    
+    select{margin-left:10px;padding:6px;border-radius:8px;background:#0f1113;    
+           color:#fff;border:1px solid rgba(255,255,255,0.2);}    
+  </style>    
+</head>    
+<body>    
+  <h1>LUCK STORE - Catálogo</h1>    
+    
+  <div class="card">    
+    <label>Ver categoría:</label>    
+    <select id="categorySelect">    
+      <option value="all" selected>Mostrar todas</option>    
+      <option value="accounts">Cuentas</option>    
+      <option value="hacks">Hacks</option>    
+      <option value="services">Servicios</option>    
+      <option value="freehacks">Hacks Gratis</option>    
+    </select>    
+    
+    <label style="margin-left:16px">Ordenar por:</label>    
+    <select id="sortSelect">    
+      <option value="newest">Más recientes</option>    
+      <option value="oldest">Más antiguos</option>    
+      <option value="lowPrice">Precio más bajo</option>    
+      <option value="highPrice">Precio más alto</option>    
+    </select>    
+  </div>    
+    
+  <div id="productsContainer"></div>    
+    
+  <!-- Firebase -->    
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>    
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>    
+  <script>    
+    const firebaseConfig = {    
+      apiKey: "AIzaSyCj0DVSi2LKWVEIb0vVBNmBk5kwNKwwJrg",    
+      authDomain: "storeacounts-d0ca8.firebaseapp.com",    
+      projectId: "storeacounts-d0ca8",    
+      databaseURL: "https://storeacounts-d0ca8-default-rtdb.firebaseio.com",    
+      storageBucket: "storeacounts-d0ca8.appspot.com",    
+      messagingSenderId: "822442149761",    
+      appId: "1:822442149761:web:bb1d97c5c5f170ddb10a80"    
+    };    
+    firebase.initializeApp(firebaseConfig);    
+    const db = firebase.database();    
+    
+    const productsContainer=document.getElementById("productsContainer"),    
+          categorySelect=document.getElementById("categorySelect"),    
+          sortSelect=document.getElementById("sortSelect");    
+    
+    let currentCat="all";    
+    loadProducts("all");    
+    
+    categorySelect.onchange=()=>{currentCat=categorySelect.value;loadProducts(currentCat);}    
+    sortSelect.onchange=()=>loadProducts(currentCat);    
+    
+    function getYoutubeEmbed(link) {    
+      try {    
+        const url = new URL(link);    
+        if (url.hostname.includes("youtu.be")) {    
+          return "https://www.youtube.com/embed/" + url.pathname.slice(1);    
+        }    
+        if (url.searchParams.get("v")) {    
+          return "https://www.youtube.com/embed/" + url.searchParams.get("v");    
+        }    
+        if (url.pathname.startsWith("/shorts/")) {    
+          return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];    
+        }    
+      } catch (e) { return ""; }    
+      return "";    
+    }    
+    
+    function loadProducts(cat){    
+      productsContainer.innerHTML="";    
+    
+      const categories = (cat==="all") ? ["accounts","hacks","services","freehacks"] : [cat];    
+    
+      categories.forEach(c=>{    
+        const section=document.createElement("div");    
+        section.className="card";    
+        section.innerHTML=`<h2>${getTitle(c)}</h2><div id="prod_${c}" class="products"></div>`;    
+        productsContainer.appendChild(section);    
+    
+        const container=document.getElementById("prod_"+c);    
+    
+        db.ref("products/"+c).once("value",snap=>{    
+          let data=snap.val();    
+          if(!data){    
+            section.querySelector("h2").textContent=getTitle(c)+" (0)";    
+            return;    
+          }    
+          let arr=Object.entries(data).map(([id,p])=>({...p,id}));    
+    
+          // ordenar    
+          const sort=sortSelect.value;    
+          if(sort==="newest") arr.sort((a,b)=>b.createdAt-a.createdAt);    
+          if(sort==="oldest") arr.sort((a,b)=>a.createdAt-b.createdAt);    
+          if(sort==="lowPrice") arr.sort((a,b)=>getMinPrice(a)-getMinPrice(b));    
+          if(sort==="highPrice") arr.sort((a,b)=>getMaxPrice(b)-getMaxPrice(a));    
+    
+          arr.forEach(p=>{    
+            const d=document.createElement("div");d.className="product";    
+            if(c==="accounts"){    
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
+                           <h3>${p.title}</h3>    
+                           <div class="desc">${p.desc}</div>    
+                           <div class="price">$${p.price}</div>`;    
+            }    
+            if(c==="hacks"){    
+              let prices="";    
+              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});    
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
+                           <h3>${p.title}</h3>    
+                           <div class="desc">${p.desc}</div>${prices}`;    
+            }    
+            if(c==="services"){    
+              let prices="";    
+              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});    
+              d.innerHTML=`<img src="${p.imgLink}">    
+                           <h3>${p.title}</h3>    
+                           <div class="desc">${p.desc}</div>${prices}`;    
+            }    
+            if(c==="freehacks"){    
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
+                           <h3>${p.title}</h3>    
+                           <div class="desc">Hack totalmente gratis</div>    
+                           <a href="${p.downloadLink}" target="_blank" class="btn btn-download">📥 Descargar</a>    
+                           <a href="${p.youtubeLink}" target="_blank" class="btn btn-tutorial">▶ Ver tutorial</a>`;    
+            }    
+            container.appendChild(d);    
+          });    
+    
+          section.querySelector("h2").textContent=getTitle(c)+" ("+arr.length+")";    
+        });    
+      });    
+    }    
+    
+    function getTitle(cat){    
+      if(cat==="accounts") return "Cuentas";    
+      if(cat==="hacks") return "Hacks";    
+      if(cat==="services") return "Servicios";    
+      if(cat==="freehacks") return "Hacks gratis";    
+      return "Productos";    
+    }    
+    
+    function getMinPrice(p){    
+      if(p.price) return p.price;    
+      if(p.priceList) return Math.min(...p.priceList.map(x=>x.price));    
+      return 0;    
+    }    
+    function getMaxPrice(p){    
+      if(p.price) return p.price;    
+      if(p.priceList) return Math.max(...p.priceList.map(x=>x.price));    
+      return 0;    
+    }    
+  </script>    
+</body>    
 </html>
