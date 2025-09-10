@@ -1,179 +1,253 @@
-<!doctype html>    
-<html lang="es">    
-<head>    
-  <meta charset="utf-8" />    
-  <meta name="viewport" content="width=device-width,initial-scale=1" />    
-  <title>LUCK STORE - Página Pública</title>    
-  <style>    
-    body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}    
-    h1{margin:0 0 16px 0;font-size:24px;text-align:center}    
-    .card{background:#11161c;padding:16px;border-radius:12px;    
-          border:1px solid rgba(255,255,255,0.05);margin-bottom:16px}    
-    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));    
-              gap:14px;margin-top:12px}    
-    .product{background:#0f1113;padding:10px;border-radius:12px;text-align:center}    
-    .product iframe{width:100%;height:160px;border-radius:8px;background:#000}    
-    .product img{width:100%;border-radius:8px}    
-    .product h3{margin:6px 0;font-size:15px}    
-    .desc{font-size:13px;color:#bcd6ff;min-height:32px;margin-bottom:8px}    
-    .price{font-weight:700;color:#a7ffb8;margin:4px 0}    
-    .btn{display:inline-block;padding:8px 12px;margin:6px 4px;    
-         border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600}    
-    .btn-download{background:#00c3ff;color:#fff}    
-    .btn-tutorial{background:#ff006a;color:#fff}    
-    select{margin-left:10px;padding:6px;border-radius:8px;background:#0f1113;    
-           color:#fff;border:1px solid rgba(255,255,255,0.2);}    
-  </style>    
-</head>    
-<body>    
-  <h1>LUCK STORE - Catálogo</h1>    
-    
-  <div class="card">    
-    <label>Ver categoría:</label>    
-    <select id="categorySelect">    
-      <option value="all" selected>Mostrar todas</option>    
-      <option value="accounts">Cuentas</option>    
-      <option value="hacks">Hacks</option>    
-      <option value="services">Servicios</option>    
-      <option value="freehacks">Hacks Gratis</option>    
-    </select>    
-    
-    <label style="margin-left:16px">Ordenar por:</label>    
-    <select id="sortSelect">    
-      <option value="newest">Más recientes</option>    
-      <option value="oldest">Más antiguos</option>    
-      <option value="lowPrice">Precio más bajo</option>    
-      <option value="highPrice">Precio más alto</option>    
-    </select>    
-  </div>    
-    
-  <div id="productsContainer"></div>    
-    
-  <!-- Firebase -->    
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>    
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>    
-  <script>    
-    const firebaseConfig = {    
-      apiKey: "AIzaSyCj0DVSi2LKWVEIb0vVBNmBk5kwNKwwJrg",    
-      authDomain: "storeacounts-d0ca8.firebaseapp.com",    
-      projectId: "storeacounts-d0ca8",    
-      databaseURL: "https://storeacounts-d0ca8-default-rtdb.firebaseio.com",    
-      storageBucket: "storeacounts-d0ca8.appspot.com",    
-      messagingSenderId: "822442149761",    
-      appId: "1:822442149761:web:bb1d97c5c5f170ddb10a80"    
-    };    
-    firebase.initializeApp(firebaseConfig);    
-    const db = firebase.database();    
-    
-    const productsContainer=document.getElementById("productsContainer"),    
-          categorySelect=document.getElementById("categorySelect"),    
-          sortSelect=document.getElementById("sortSelect");    
-    
-    let currentCat="all";    
-    loadProducts("all");    
-    
-    categorySelect.onchange=()=>{currentCat=categorySelect.value;loadProducts(currentCat);}    
-    sortSelect.onchange=()=>loadProducts(currentCat);    
-    
-    function getYoutubeEmbed(link) {    
-      try {    
-        const url = new URL(link);    
-        if (url.hostname.includes("youtu.be")) {    
-          return "https://www.youtube.com/embed/" + url.pathname.slice(1);    
-        }    
-        if (url.searchParams.get("v")) {    
-          return "https://www.youtube.com/embed/" + url.searchParams.get("v");    
-        }    
-        if (url.pathname.startsWith("/shorts/")) {    
-          return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];    
-        }    
-      } catch (e) { return ""; }    
-      return "";    
-    }    
-    
-    function loadProducts(cat){    
-      productsContainer.innerHTML="";    
-    
-      const categories = (cat==="all") ? ["accounts","hacks","services","freehacks"] : [cat];    
-    
-      categories.forEach(c=>{    
-        const section=document.createElement("div");    
-        section.className="card";    
-        section.innerHTML=`<h2>${getTitle(c)}</h2><div id="prod_${c}" class="products"></div>`;    
-        productsContainer.appendChild(section);    
-    
-        const container=document.getElementById("prod_"+c);    
-    
-        db.ref("products/"+c).once("value",snap=>{    
-          let data=snap.val();    
-          if(!data){    
-            section.querySelector("h2").textContent=getTitle(c)+" (0)";    
-            return;    
-          }    
-          let arr=Object.entries(data).map(([id,p])=>({...p,id}));    
-    
-          // ordenar    
-          const sort=sortSelect.value;    
-          if(sort==="newest") arr.sort((a,b)=>b.createdAt-a.createdAt);    
-          if(sort==="oldest") arr.sort((a,b)=>a.createdAt-b.createdAt);    
-          if(sort==="lowPrice") arr.sort((a,b)=>getMinPrice(a)-getMinPrice(b));    
-          if(sort==="highPrice") arr.sort((a,b)=>getMaxPrice(b)-getMaxPrice(a));    
-    
-          arr.forEach(p=>{    
-            const d=document.createElement("div");d.className="product";    
-            if(c==="accounts"){    
-              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
-                           <h3>${p.title}</h3>    
-                           <div class="desc">${p.desc}</div>    
-                           <div class="price">$${p.price}</div>`;    
-            }    
-            if(c==="hacks"){    
-              let prices="";    
-              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});    
-              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
-                           <h3>${p.title}</h3>    
-                           <div class="desc">${p.desc}</div>${prices}`;    
-            }    
-            if(c==="services"){    
-              let prices="";    
-              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});    
-              d.innerHTML=`<img src="${p.imgLink}">    
-                           <h3>${p.title}</h3>    
-                           <div class="desc">${p.desc}</div>${prices}`;    
-            }    
-            if(c==="freehacks"){    
-              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>    
-                           <h3>${p.title}</h3>    
-                           <div class="desc">Hack totalmente gratis</div>    
-                           <a href="${p.downloadLink}" target="_blank" class="btn btn-download">📥 Descargar</a>    
-                           <a href="${p.youtubeLink}" target="_blank" class="btn btn-tutorial">▶ Ver tutorial</a>`;    
-            }    
-            container.appendChild(d);    
-          });    
-    
-          section.querySelector("h2").textContent=getTitle(c)+" ("+arr.length+")";    
-        });    
-      });    
-    }    
-    
-    function getTitle(cat){    
-      if(cat==="accounts") return "Cuentas";    
-      if(cat==="hacks") return "Hacks";    
-      if(cat==="services") return "Servicios";    
-      if(cat==="freehacks") return "Hacks gratis";    
-      return "Productos";    
-    }    
-    
-    function getMinPrice(p){    
-      if(p.price) return p.price;    
-      if(p.priceList) return Math.min(...p.priceList.map(x=>x.price));    
-      return 0;    
-    }    
-    function getMaxPrice(p){    
-      if(p.price) return p.price;    
-      if(p.priceList) return Math.max(...p.priceList.map(x=>x.price));    
-      return 0;    
-    }    
-  </script>    
-</body>    
+<!doctype html>      
+<html lang="es">      
+<head>      
+  <meta charset="utf-8" />      
+  <meta name="viewport" content="width=device-width,initial-scale=1" />      
+  <title>LUCK STORE - Página Pública</title>      
+  <style>      
+    body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}      
+    h1{margin:0 0 16px 0;font-size:24px;text-align:center}      
+    .card{background:#11161c;padding:16px;border-radius:12px;      
+          border:1px solid rgba(255,255,255,0.05);margin-bottom:16px}      
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));      
+              gap:14px;margin-top:12px}      
+    .product{background:#0f1113;padding:10px;border-radius:12px;text-align:center}      
+    .product iframe{width:100%;height:160px;border-radius:8px;background:#000}      
+    .product img{width:100%;border-radius:8px}      
+    .product h3{margin:6px 0;font-size:15px}      
+    .desc{font-size:13px;color:#bcd6ff;min-height:32px;margin-bottom:8px}      
+    .price{font-weight:700;color:#a7ffb8;margin:4px 0}      
+    .btn{display:inline-block;padding:8px 12px;margin:6px 4px;      
+         border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600}      
+    .btn-download{background:#00c3ff;color:#fff}      
+    .btn-tutorial{background:#ff006a;color:#fff}      
+    select{margin-left:10px;padding:6px;border-radius:8px;background:#0f1113;      
+           color:#fff;border:1px solid rgba(255,255,255,0.2);}      
+
+    /* === ALERTA === */
+    .alert-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .alert-box {
+      background: #11161c;
+      border: 2px solid #00c3ff;
+      box-shadow: 0 0 20px #00c3ff, 0 0 40px #ff006a;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      max-width: 400px;
+      font-size: 15px;
+      transform: scale(0.5);
+      opacity: 0;
+      animation: zoomIn 0.4s forwards;
+    }
+    .alert-box.hide {
+      animation: zoomOut 0.4s forwards;
+    }
+    .alert-box h2 {
+      margin-top: 0;
+      color: #ffde59;
+    }
+    .alert-btn {
+      margin-top: 15px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #00c3ff;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .alert-btn:hover {
+      background: #008ecc;
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes zoomOut {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(0.5); opacity: 0; }
+    }
+  </style>      
+</head>      
+<body>      
+  <h1>LUCK STORE - Catálogo</h1>      
+
+  <!-- ALERTA -->
+  <div class="alert-overlay" id="alertOverlay">
+    <div class="alert-box" id="alertBox">
+      <h2>⚠️ Aviso importante</h2>
+      <p>Todos los tratos de esta página web se harán directamente con el desarrollador, esto para evitar estafas y que todo sea 100% legal.</p>
+      <button class="alert-btn" id="closeAlert">De acuerdo</button>
+    </div>
+  </div>
+
+  <div class="card">      
+    <label>Ver categoría:</label>      
+    <select id="categorySelect">      
+      <option value="all" selected>Mostrar todas</option>      
+      <option value="accounts">Cuentas</option>      
+      <option value="hacks">Hacks</option>      
+      <option value="services">Servicios</option>      
+      <option value="freehacks">Hacks Gratis</option>      
+    </select>      
+
+    <label style="margin-left:16px">Ordenar por:</label>      
+    <select id="sortSelect">      
+      <option value="newest">Más recientes</option>      
+      <option value="oldest">Más antiguos</option>      
+      <option value="lowPrice">Precio más bajo</option>      
+      <option value="highPrice">Precio más alto</option>      
+    </select>      
+  </div>      
+
+  <div id="productsContainer"></div>      
+
+  <!-- Firebase -->      
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>      
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>      
+  <script>      
+    const firebaseConfig = {      
+      apiKey: "AIzaSyCj0DVSi2LKWVEIb0vVBNmBk5kwNKwwJrg",      
+      authDomain: "storeacounts-d0ca8.firebaseapp.com",      
+      projectId: "storeacounts-d0ca8",      
+      databaseURL: "https://storeacounts-d0ca8-default-rtdb.firebaseio.com",      
+      storageBucket: "storeacounts-d0ca8.appspot.com",      
+      messagingSenderId: "822442149761",      
+      appId: "1:822442149761:web:bb1d97c5c5f170ddb10a80"      
+    };      
+    firebase.initializeApp(firebaseConfig);      
+    const db = firebase.database();      
+
+    const productsContainer=document.getElementById("productsContainer"),      
+          categorySelect=document.getElementById("categorySelect"),      
+          sortSelect=document.getElementById("sortSelect");      
+
+    let currentCat="all";      
+    loadProducts("all");      
+
+    categorySelect.onchange=()=>{currentCat=categorySelect.value;loadProducts(currentCat);}      
+    sortSelect.onchange=()=>loadProducts(currentCat);      
+
+    function getYoutubeEmbed(link) {      
+      try {      
+        const url = new URL(link);      
+        if (url.hostname.includes("youtu.be")) {      
+          return "https://www.youtube.com/embed/" + url.pathname.slice(1);      
+        }      
+        if (url.searchParams.get("v")) {      
+          return "https://www.youtube.com/embed/" + url.searchParams.get("v");      
+        }      
+        if (url.pathname.startsWith("/shorts/")) {      
+          return "https://www.youtube.com/embed/" + url.pathname.split("/")[2];      
+        }      
+      } catch (e) { return ""; }      
+      return "";      
+    }      
+
+    function loadProducts(cat){      
+      productsContainer.innerHTML="";      
+
+      const categories = (cat==="all") ? ["accounts","hacks","services","freehacks"] : [cat];      
+
+      categories.forEach(c=>{      
+        const section=document.createElement("div");      
+        section.className="card";      
+        section.innerHTML=`<h2>${getTitle(c)}</h2><div id="prod_${c}" class="products"></div>`;      
+        productsContainer.appendChild(section);      
+
+        const container=document.getElementById("prod_"+c);      
+
+        db.ref("products/"+c).once("value",snap=>{      
+          let data=snap.val();      
+          if(!data){      
+            section.querySelector("h2").textContent=getTitle(c)+" (0)";      
+            return;      
+          }      
+          let arr=Object.entries(data).map(([id,p])=>({...p,id}));      
+
+          // ordenar      
+          const sort=sortSelect.value;      
+          if(sort==="newest") arr.sort((a,b)=>b.createdAt-a.createdAt);      
+          if(sort==="oldest") arr.sort((a,b)=>a.createdAt-b.createdAt);      
+          if(sort==="lowPrice") arr.sort((a,b)=>getMinPrice(a)-getMinPrice(b));      
+          if(sort==="highPrice") arr.sort((a,b)=>getMaxPrice(b)-getMaxPrice(a));      
+
+          arr.forEach(p=>{      
+            const d=document.createElement("div");d.className="product";      
+            if(c==="accounts"){      
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
+                           <h3>${p.title}</h3>      
+                           <div class="desc">${p.desc}</div>      
+                           <div class="price">$${p.price}</div>`;      
+            }      
+            if(c==="hacks"){      
+              let prices="";      
+              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});      
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
+                           <h3>${p.title}</h3>      
+                           <div class="desc">${p.desc}</div>${prices}`;      
+            }      
+            if(c==="services"){      
+              let prices="";      
+              p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});      
+              d.innerHTML=`<img src="${p.imgLink}">      
+                           <h3>${p.title}</h3>      
+                           <div class="desc">${p.desc}</div>${prices}`;      
+            }      
+            if(c==="freehacks"){      
+              d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
+                           <h3>${p.title}</h3>      
+                           <div class="desc">Hack totalmente gratis</div>      
+                           <a href="${p.downloadLink}" target="_blank" class="btn btn-download">📥 Descargar</a>      
+                           <a href="${p.youtubeLink}" target="_blank" class="btn btn-tutorial">▶ Ver tutorial</a>`;      
+            }      
+            container.appendChild(d);      
+          });      
+
+          section.querySelector("h2").textContent=getTitle(c)+" ("+arr.length+")";      
+        });      
+      });      
+    }      
+
+    function getTitle(cat){      
+      if(cat==="accounts") return "Cuentas";      
+      if(cat==="hacks") return "Hacks";      
+      if(cat==="services") return "Servicios";      
+      if(cat==="freehacks") return "Hacks gratis";      
+      return "Productos";      
+    }      
+
+    function getMinPrice(p){      
+      if(p.price) return p.price;      
+      if(p.priceList) return Math.min(...p.priceList.map(x=>x.price));      
+      return 0;      
+    }      
+    function getMaxPrice(p){      
+      if(p.price) return p.price;      
+      if(p.priceList) return Math.max(...p.priceList.map(x=>x.price));      
+      return 0;      
+    }      
+
+    // === FUNCION ALERTA ===
+    const closeBtn = document.getElementById("closeAlert");
+    const alertBox = document.getElementById("alertBox");
+    const overlay = document.getElementById("alertOverlay");
+
+    closeBtn.addEventListener("click", () => {
+      alertBox.classList.add("hide");
+      setTimeout(()=> overlay.style.display="none", 400);
+    });
+  </script>      
+</body>      
 </html>
