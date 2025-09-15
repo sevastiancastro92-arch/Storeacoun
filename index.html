@@ -1,8 +1,6 @@
-<!doctype html>      
-<html lang="es">      
-<head>      
-  <meta charset="utf-8" />      
-  <meta name="viewport" content="width=device-width,initial-scale=1" />      
+<!DOCTYPE html><html lang="es"><head>      
+  <meta charset="utf-8">      
+  <meta name="viewport" content="width=device-width,initial-scale=1">      
   <title>LUCK STORE - Página Pública</title>      
   <style>      
     body{margin:0;background:#0b0b10;color:#e6eef6;font-family:Inter,Arial,sans-serif;padding:16px;}      
@@ -79,13 +77,13 @@
       to { transform: scale(0.5); opacity: 0; }
     }
   </style>      
-</head>      
+<style type="text/css">* {user-select: auto !important; -webkit-user-select: auto !important;}</style><input type="hidden" id="inject_idm_text_selection"><style></style></head>      
 <body>      
   <h1>LUCK STORE - Catálogo</h1>      
 
   <!-- ALERTA -->
-  <div class="alert-overlay" id="alertOverlay">
-    <div class="alert-box" id="alertBox">
+  <div class="alert-overlay" id="alertOverlay" style="display: none;">
+    <div class="alert-box hide" id="alertBox">
       <h2>⚠️ Aviso importante</h2>
       <p>Todos los tratos de esta página web se harán directamente con el desarrollador, esto para evitar estafas y que todo sea 100% legal.</p>
       <button class="alert-btn" id="closeAlert">De acuerdo</button>
@@ -95,7 +93,7 @@
   <div class="card">      
     <label>Ver categoría:</label>      
     <select id="categorySelect">      
-      <option value="all" selected>Mostrar todas</option>      
+      <option value="all" selected="">Mostrar todas</option>      
       <option value="accounts">Cuentas</option>      
       <option value="hacks">Hacks</option>      
       <option value="services">Servicios</option>      
@@ -189,21 +187,33 @@
               d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
                            <h3>${p.title}</h3>      
                            <div class="desc">${p.desc}</div>      
-                           <div class="price">$${p.price}</div>`;      
+                           <div class="price">$${p.price}</div>
+                           <a href="https://wa.me/573142369516?text=Me%20interesa%20${encodeURIComponent(p.title)}" 
+                              target="_blank" 
+                              class="btn" 
+                              style="background:#25d366;color:#fff">💬 Me interesa</a>`;      
             }      
             if(c==="hacks"){      
               let prices="";      
               p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});      
               d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
                            <h3>${p.title}</h3>      
-                           <div class="desc">${p.desc}</div>${prices}`;      
+                           <div class="desc">${p.desc}</div>${prices}
+                           <a href="https://wa.me/573142369516?text=Me%20interesa%20${encodeURIComponent(p.title)}" 
+                              target="_blank" 
+                              class="btn" 
+                              style="background:#25d366;color:#fff">💬 Me interesa</a>`;      
             }      
             if(c==="services"){      
               let prices="";      
               p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});      
               d.innerHTML=`<img src="${p.imgLink}">      
                            <h3>${p.title}</h3>      
-                           <div class="desc">${p.desc}</div>${prices}`;      
+                           <div class="desc">${p.desc}</div>${prices}
+                           <a href="https://wa.me/573142369516?text=Me%20interesa%20${encodeURIComponent(p.title)}" 
+                              target="_blank" 
+                              class="btn" 
+                              style="background:#25d366;color:#fff">💬 Me interesa</a>`;      
             }      
             if(c==="freehacks"){      
               d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>      
@@ -249,5 +259,4 @@
       setTimeout(()=> overlay.style.display="none", 400);
     });
   </script>      
-</body>      
-</html>
+</body></html>
