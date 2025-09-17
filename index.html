@@ -77,7 +77,7 @@
       to { transform: scale(0.5); opacity: 0; }  
     }  
   </style>        
-</head><body>        
+<style type="text/css">* {user-select: auto !important; -webkit-user-select: auto !important;}</style></head><body>        
         
   <h1>LUCK STORE - Catálogo</h1>        
   
@@ -96,7 +96,7 @@
       <option value="all">Mostrar todas</option>        
       <option value="accounts">Cuentas</option>        
       <option value="hacks">Hacks</option>        
-      <option value="services" selected>Servicios Streagmin</option>        
+      <option value="services" selected="">Servicios Streagmin</option>        
       <option value="freehacks">Hacks Gratis</option>        
     </select>        
   
@@ -156,7 +156,6 @@
     function loadProducts(cat){        
       productsContainer.innerHTML="";        
   
-      // primero siempre "services" y luego las demás  
       const categories = (cat==="all")   
         ? ["services","accounts","hacks","freehacks"]   
         : (cat==="services" ? ["services","accounts","hacks","freehacks"] : [cat]);        
@@ -177,7 +176,6 @@
           }        
           let arr=Object.entries(data).map(([id,p])=>({...p,id}));        
   
-          // ordenar        
           const sort=sortSelect.value;        
           if(sort==="newest") arr.sort((a,b)=>b.createdAt-a.createdAt);        
           if(sort==="oldest") arr.sort((a,b)=>a.createdAt-b.createdAt);        
@@ -187,11 +185,12 @@
           arr.forEach(p=>{        
             const d=document.createElement("div");d.className="product";        
             if(c==="accounts"){        
+              const msg = encodeURIComponent(`Me interesa ${p.title}\n${p.youtubeLink||""}`);        
               d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>        
                            <h3>${p.title}</h3>        
                            <div class="desc">${p.desc}</div>        
                            <div class="price">$${p.price}</div>  
-                           <a href="https://wa.me/573142369516?text=Me%20interesa%20${encodeURIComponent(p.title)}"   
+                           <a href="https://wa.me/573142369516?text=${msg}"   
                               target="_blank"   
                               class="btn"   
                               style="background:#25d366;color:#fff">💬 Me interesa</a>`;        
@@ -199,10 +198,11 @@
             if(c==="hacks"){        
               let prices="";        
               p.priceList?.forEach(pr=>{prices+=`<div class="price">${pr.days} → $${pr.price}</div>`;});        
+              const msg = encodeURIComponent(`Me interesa ${p.title}\n${p.youtubeLink||""}`);        
               d.innerHTML=`<iframe src="${getYoutubeEmbed(p.youtubeLink)}"></iframe>        
                            <h3>${p.title}</h3>        
                            <div class="desc">${p.desc}</div>${prices}  
-                           <a href="https://wa.me/573142369516?text=Me%20interesa%20${encodeURIComponent(p.title)}"   
+                           <a href="https://wa.me/573142369516?text=${msg}"   
                               target="_blank"   
                               class="btn"   
                               style="background:#25d366;color:#fff">💬 Me interesa</a>`;        
@@ -266,4 +266,5 @@
     });  
   </script>        
   
+
 </body></html>
